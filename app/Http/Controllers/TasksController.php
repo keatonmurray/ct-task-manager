@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Task;
 
 class TasksController extends Controller
 {
@@ -11,7 +12,8 @@ class TasksController extends Controller
      */
     public function index()
     {
-        return view('pages.index');
+        $tasks = Task::all();
+        return view('pages.index')->with('tasks', $tasks);
     }
 
     /**
@@ -27,7 +29,13 @@ class TasksController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $data = $request->validate([
+            'task_name' => 'required',
+            'priority' => 'required'
+        ]);
+
+        Task::create($data);
+        return redirect('/');
     }
 
     /**
@@ -35,23 +43,41 @@ class TasksController extends Controller
      */
     public function show(string $id)
     {
-        return view('pages.show');
+        $getSingleTask = Task::find($id);
+        return view('pages.show')->with('task', $getSingleTask);
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Task $id)
     {
-        return view('pages.edit');
+        return view('pages.edit', ['task' => $id]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Task $id)
     {
-        //
+        $data = $request->validate([
+            'task_name' => 'required|max:85',
+            'priority' => 'required|integer'
+        ]);
+
+        $id->update($data);
+        return redirect('/');
+    }
+
+    public function updatePriority(Request $request)
+    {
+        $items = $request->input('items'); 
+    
+        foreach ($items as $index => $id) {
+            Task::where('id', $id)->update(['priority' => $index + 1]); 
+        }
+    
+        return response()->json(['success' => true]);
     }
 
     /**
@@ -59,6 +85,9 @@ class TasksController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $deleteTask = Task::find($id);
+        $deleteTask->delete();
+
+        return redirect('/');
     }
 }
